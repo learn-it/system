@@ -1,0 +1,50 @@
+diff -Nuarpd lib_vinegret/executable.c lib_vinegret_fix/executable.c
+--- lib_vinegret/executable.c	2012-03-08 12:38:46.222531823 +0400
++++ lib_vinegret_fix/executable.c	2012-03-08 12:26:36.051460880 +0400
+@@ -5,5 +5,7 @@ int main()
+ {
+     libv1_user_func();
+     libv2_user_func();
++    libv1_user_func();
++    libv2_user_func();
+     return 0;
+ }
+diff -Nuarpd lib_vinegret/lib_v2_user_scoper.c lib_vinegret_fix/lib_v2_user_scoper.c
+--- lib_vinegret/lib_v2_user_scoper.c	1970-01-01 03:00:00.000000000 +0300
++++ lib_vinegret_fix/lib_v2_user_scoper.c	2012-03-08 12:45:07.113090460 +0400
+@@ -0,0 +1,20 @@
++#include <stdio.h>
++#include <dlfcn.h>
++
++void *lib_v2_user;
++void (*libv2_user_orig)();
++
++void __init()
++{
++    lib_v2_user = dlopen("./lib_v2_user.so", RTLD_LAZY|RTLD_DEEPBIND);
++    if (lib_v2_user) {
++        *(void **)(&libv2_user_orig) = dlsym(lib_v2_user, "libv2_user_func");
++    } else {
++        fprintf(stderr, "%s\n", dlerror());
++    }
++}
++
++void libv2_user_func()
++{
++    (*libv2_user_orig)();
++}
+diff -Nuarpd lib_vinegret/Makefile lib_vinegret_fix/Makefile
+--- lib_vinegret/Makefile	2012-03-08 12:47:56.633339100 +0400
++++ lib_vinegret_fix/Makefile	2012-03-08 12:47:35.933308729 +0400
+@@ -15,7 +15,10 @@ lib_v1_user.so: lib_v1_user.c lib_v1.so
+ lib_v2_user.so: lib_v2_user.c lib_v2.so
+ 	gcc $(shared) $(rpath) $^ -o $@
+ 
+-executable: executable.c lib_v1_user.so lib_v2_user.so
++lib_v2_user_scoper.so: lib_v2_user_scoper.c lib_v2_user.so
++	gcc $(shared) $(rpath) -Xlinker -init=__init $< -ldl -o $@
++
++executable: executable.c lib_v1_user.so lib_v2_user_scoper.so
+ 	gcc $(rpath) $^ -o $@
+ 
+ clean:
