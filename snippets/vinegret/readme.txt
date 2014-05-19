@@ -41,7 +41,7 @@ Sadly enough, there is no way to force dynamic linker to load
 different objects with different lookup scopes. But here comes
 RTLD_DEEPBIND to the stage. Please, look at this diff:
 
-http://bugs.pearsoncomputing.net/attachment.cgi?id=468&action=diff
+https://github.com/learn-it/system/blob/master/snippets/vinegret/lib_vinegret_fix.diff
 
 I made some wrapper 'lib_v2_user_scoper' around the code we want to
 load with different library. If you run this variant, you should see
